@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
-import { AlbatoConfigError, sendToAlbato } from "@/lib/video-request/albato";
+import { AlbatoConfigError, AlbatoDeliveryError, sendToAlbato } from "@/lib/video-request/albato";
 import { getClientIp, rateLimit } from "@/lib/video-request/rate-limit";
 import type { AlbatoPayload, VideoRequestResponse } from "@/lib/video-request/types";
 import { validateVideoRequest } from "@/lib/video-request/validation";
@@ -88,13 +88,18 @@ export async function POST(req: NextRequest) {
       request_id: requestId,
     };
 
-    await sendToAlbato(payload);
+    const albatoStatus = await sendToAlbato(payload);
 
-    console.info(`[video-request] ${requestId} forwarded to Albato`);
+    console.info(`[video-request] ${requestId} forwarded to Albato as JSON POST (HTTP ${albatoStatus})`);
     return json({ success: true, request_id: requestId });
   } catch (err) {
-    // Log only a safe, non-secret description. Never the webhook URL, never a stack to the client.
-    const reason = err instanceof AlbatoConfigError ? "missing ALBATO_WEBHOOK_URL" : err instanceof Error ? err.message : "unknown error";
+    // Our error messages never contain the webhook URL; anything unexpected is reduced to its name.
+    const reason =
+      err instanceof AlbatoConfigError || err instanceof AlbatoDeliveryError
+        ? err.message
+        : err instanceof Error
+          ? `unexpected ${err.name}`
+          : "unknown error";
     console.error(`[video-request] ${requestId} failed: ${reason}`);
     return json({ success: false, message: GENERIC_ERROR }, 502);
   }
