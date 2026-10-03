@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { track } from "@/lib/analytics";
+import { BUSINESS_EMAIL_MESSAGE, isPersonalEmail } from "@/lib/video-request/business-email";
 import type { VideoRequestResponse } from "@/lib/video-request/types";
+import { FIRST_NAME_ONE_WORD_MESSAGE } from "@/lib/video-request/validation";
 
 type Status = "idle" | "sending" | "success" | "error";
 type FieldErrors = Partial<Record<"first_name" | "email", string>>;
@@ -51,8 +53,10 @@ export default function VideoRequestForm() {
 
     const nextErrors: FieldErrors = {};
     if (!first_name) nextErrors.first_name = "Please enter your first name.";
+    else if (/\s/.test(first_name)) nextErrors.first_name = FIRST_NAME_ONE_WORD_MESSAGE;
     if (!email) nextErrors.email = "Please enter your work email.";
     else if (!EMAIL_RE.test(email)) nextErrors.email = "Please enter a valid email address.";
+    else if (isPersonalEmail(email)) nextErrors.email = BUSINESS_EMAIL_MESSAGE;
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -72,7 +76,6 @@ export default function VideoRequestForm() {
         body: JSON.stringify({
           first_name,
           email,
-          company: value("company"),
           website: value("website"), // honeypot
           ...readContext(),
         }),
@@ -138,29 +141,27 @@ export default function VideoRequestForm() {
       noValidate
       aria-describedby="form-note"
     >
-      <div className="field-row">
-        <Field
-          id="first_name"
-          label="First name"
-          autoComplete="given-name"
-          required
-          maxLength={80}
-          error={errors.first_name}
-          disabled={sending}
-        />
-        <Field
-          id="email"
-          label="Work email"
-          type="email"
-          autoComplete="email"
-          inputMode="email"
-          required
-          maxLength={254}
-          error={errors.email}
-          disabled={sending}
-        />
-      </div>
-      <Field id="company" label="Company" autoComplete="organization" maxLength={120} disabled={sending} />
+      <Field
+        id="first_name"
+        label="First name"
+        autoComplete="given-name"
+        required
+        maxLength={80}
+        error={errors.first_name}
+        disabled={sending}
+      />
+      <Field
+        id="email"
+        label="Work email"
+        type="email"
+        autoComplete="email"
+        inputMode="email"
+        placeholder="you@company.com"
+        required
+        maxLength={254}
+        error={errors.email}
+        disabled={sending}
+      />
 
       {/* Honeypot: hidden from people and assistive tech, tempting to bots. */}
       <div className="hp" aria-hidden="true">

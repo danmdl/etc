@@ -1,4 +1,7 @@
+import { BUSINESS_EMAIL_MESSAGE, isPersonalEmail } from "./business-email";
 import type { VideoRequestInput } from "./types";
+
+export const FIRST_NAME_ONE_WORD_MESSAGE = "Please enter just your first name (one word).";
 
 export const LIMITS = {
   first_name: 80,
@@ -66,8 +69,14 @@ export function validateVideoRequest(body: unknown): ValidationResult {
   if (!first_name || !email) {
     return { ok: false, message: "Please enter your first name and work email." };
   }
+  if (first_name.includes(" ")) {
+    return { ok: false, message: FIRST_NAME_ONE_WORD_MESSAGE };
+  }
   if (!isValidEmail(email)) {
     return { ok: false, message: "Please enter a valid email address." };
+  }
+  if (isPersonalEmail(email)) {
+    return { ok: false, message: BUSINESS_EMAIL_MESSAGE };
   }
 
   return {
