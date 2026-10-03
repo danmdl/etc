@@ -73,7 +73,6 @@ export default function VideoRequestForm() {
           first_name,
           email,
           company: value("company"),
-          job_title: value("job_title"),
           website: value("website"), // honeypot
           ...readContext(),
         }),
@@ -161,10 +160,7 @@ export default function VideoRequestForm() {
           disabled={sending}
         />
       </div>
-      <div className="field-row">
-        <Field id="company" label="Company" autoComplete="organization" maxLength={120} disabled={sending} />
-        <Field id="job_title" label="Job title" autoComplete="organization-title" maxLength={120} disabled={sending} />
-      </div>
+      <Field id="company" label="Company" autoComplete="organization" maxLength={120} disabled={sending} />
 
       {/* Honeypot: hidden from people and assistive tech, tempting to bots. */}
       <div className="hp" aria-hidden="true">
